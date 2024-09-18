@@ -1,6 +1,8 @@
 ﻿using HtmlAgilityPack;
 using System;
+using System.Drawing;
 using System.IO;
+using static System.Net.Mime.MediaTypeNames;
 
 class Program
 {
@@ -31,6 +33,11 @@ class Program
 
                     // Κάντε τις τροποποιήσεις στο HTML
                     ModifyPageNumberElements(htmlDoc);
+                    ModifySideNumberElements(htmlDoc);
+                    ModifyTitleElements(htmlDoc);
+                    Modifypraktika(htmlDoc);
+                    Modifykt(htmlDoc);
+                    ModifyKefalaio(htmlDoc);
                     RemoveAnchorTags(htmlDoc);
                     RemoveFootnotes(htmlDoc);
                     RemoveBreakTags(htmlDoc);
@@ -73,6 +80,120 @@ class Program
         }
     }
 
+    // Μέθοδος που τροποποιεί τα στοιχεία με class="SIDENUMBER"
+    private static void ModifySideNumberElements(HtmlDocument htmlDoc)
+    {
+        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='SIDENUMBER']");
+
+        if (nodes != null)
+        {
+            foreach (var node in nodes)
+            {
+                // Ορίστε το inline style
+                node.SetAttributeValue("style", "font-weight: bold;");
+
+
+            }
+        }
+    }
+
+    // Μέθοδος που τροποποιεί τα στοιχεία με class="praktika"
+    private static void Modifypraktika(HtmlDocument htmlDoc)
+    {
+        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='PRAKTIKO' or @class='APANTHSH-TITLOS' or @class='x--------- x---------']");
+
+        if (nodes != null)
+        {
+            foreach (var node in nodes)
+            {
+                // Ορίστε το inline style
+                node.SetAttributeValue("style", "font - size:18px; font-weight: bold;");
+
+
+            }
+        }
+    }
+
+    // Μέθοδος που τροποποιεί τα στοιχεία με class="KEFALAIO-TITLO"
+    private static void Modifykt(HtmlDocument htmlDoc)
+    {
+        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='KEFALAIO-TITLOS']");
+
+        if (nodes != null)
+        {
+            foreach (var node in nodes)
+            {
+                // Ορίστε το inline style
+                node.SetAttributeValue("style", "font - size:18px; text-align:center; font-weight: bold;");
+
+
+            }
+        }
+    }
+
+    // Μέθοδος που τροποποιεί τα στοιχεία με class="Kefalaio"
+    private static void ModifyKefalaio(HtmlDocument htmlDoc)
+    {
+        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='KEFALAIO']");
+
+        if (nodes != null)
+        {
+            foreach (var node in nodes)
+            {
+                // Ορίστε το inline style
+                node.SetAttributeValue("style", "font - size:18px; text-align:center;");
+
+
+            }
+        }
+    }
+
+    // Μέθοδος που τροποποιεί τα στοιχεία με class="H01-Titlos"
+    private static void ModifyTitleElements(HtmlDocument htmlDoc)
+    {
+        var allNodes = htmlDoc.DocumentNode.Descendants();
+
+        foreach (var node in allNodes)
+        {
+            bool containsTitlosOrTitle = false;
+
+            // Έλεγχος στο InnerText (κείμενο του κόμβου)
+            if (!string.IsNullOrEmpty(node.InnerText) &&
+                (node.InnerText.Contains("Titlos") || node.InnerText.Contains("Title")))
+            {
+                containsTitlosOrTitle = true;
+            }
+
+            // Έλεγχος στα attributes (π.χ. class, id, name, κ.λπ.)
+            foreach (var attribute in node.Attributes)
+            {
+                if (attribute.Value.Contains("Titlos") || attribute.Value.Contains("Title"))
+                {
+                    containsTitlosOrTitle = true;
+                    break;
+                }
+            }
+
+            // Αν βρέθηκε το "Titlos" ή "Title", τροποποίησε το style
+            if (containsTitlosOrTitle)
+            {
+                // Έλεγξε αν υπάρχει ήδη το style attribute, αν ναι, πρόσθεσε το νέο στυλ
+                if (node.Attributes["style"] != null)
+                {
+                    node.Attributes["style"].Value += " font-weight: bold; font-size:18px;";
+                }
+                else
+                {
+                    // Αν δεν υπάρχει το style, πρόσθεσέ το
+                    
+                    node.SetAttributeValue("style", "font-weight: bold; font-size:18px;");
+                }
+            }
+        }
+    }
+
+
+
     // Μέθοδος που αφαιρεί τα <a> tags
     private static void RemoveAnchorTags(HtmlDocument htmlDoc)
     {
@@ -96,23 +217,30 @@ class Program
     // Μέθοδος που αφαιρεί τα footnotes
     private static void RemoveFootnotes(HtmlDocument htmlDoc)
     {
-        // Βρείτε όλα τα span στοιχεία με κλάσεις Ekthetis ή ekthetis
-        var footnoteNodes = htmlDoc.DocumentNode.SelectNodes("//span[@class='Ekthetis' or @class='ekthetis']");
+        // Βρείτε όλα τα στοιχεία με οποιοδήποτε attribute που περιέχει τη λέξη "ekthetis"
+        var nodesWithEkthetis = htmlDoc.DocumentNode.SelectNodes("//*");
 
-        if (footnoteNodes != null)
+        if (nodesWithEkthetis != null)
         {
-            foreach (var node in footnoteNodes)
+            foreach (var node in nodesWithEkthetis)
             {
-                // Αφαιρέστε ολόκληρο το span element που περιέχει το footnote
-                var parentNode = node.ParentNode;
-                if (parentNode != null)
+                // Ελέγχουμε όλα τα attributes του κόμβου
+                foreach (var attribute in node.Attributes)
                 {
-                    parentNode.RemoveChild(node);
+                    // Εάν το attribute περιέχει τη λέξη "ekthetis", αφαιρούμε τον κόμβο
+                    if (attribute.Value.Contains("ekthetis") || attribute.Value.Contains("ektheths") || attribute.Value.Contains("Ekthetis") || attribute.Value.Contains("Ektheths"))
+                    {
+                        var parentNode = node.ParentNode;
+                        if (parentNode != null)
+                        {
+                            parentNode.RemoveChild(node);
+                            break; // Προχωράμε στον επόμενο κόμβο, αφού βρήκαμε το attribute που θέλουμε
+                        }
+                    }
                 }
             }
         }
     }
-
     // Μέθοδος που αφαιρεί τα <br> tags
     private static void RemoveBreakTags(HtmlDocument htmlDoc)
     {
