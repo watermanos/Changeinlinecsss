@@ -90,7 +90,7 @@ class Program
             foreach (var node in nodes)
             {
                 // Ορίστε το inline style
-                node.SetAttributeValue("style", "font-weight: bold;");
+                node.SetAttributeValue("style", "font-weight: bold; text-align: left;");
 
 
             }
@@ -175,7 +175,7 @@ class Program
             }
 
             // Αν βρέθηκε το "Titlos" ή "Title", τροποποίησε το style
-            if (containsTitlosOrTitle)
+            if (containsTitlosOrTitle && node.NodeType == HtmlNodeType.Element)
             {
                 // Έλεγξε αν υπάρχει ήδη το style attribute, αν ναι, πρόσθεσε το νέο στυλ
                 if (node.Attributes["style"] != null)
@@ -185,6 +185,7 @@ class Program
                 else
                 {
                     // Αν δεν υπάρχει το style, πρόσθεσέ το
+                    
                     
                     node.SetAttributeValue("style", "font-weight: bold; font-size:18px;");
                 }
