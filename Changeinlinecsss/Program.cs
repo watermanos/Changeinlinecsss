@@ -41,6 +41,7 @@ class Program
                     RemoveAnchorTags(htmlDoc);
                     RemoveFootnotes(htmlDoc);
                     RemoveBreakTags(htmlDoc);
+                    ModifyDir(htmlDoc);
 
                     // Αποθηκεύστε το τροποποιημένο HTML πίσω στο αρχείο
                     File.WriteAllText(htmlPath, htmlDoc.DocumentNode.OuterHtml);
@@ -59,6 +60,7 @@ class Program
         {
             Console.WriteLine("The folder you entered does not exist.");
         }
+
     }
 
     // Μέθοδος που τροποποιεί τα στοιχεία με class="PAGENUMBER"
@@ -142,6 +144,22 @@ class Program
             {
                 // Ορίστε το inline style
                 node.SetAttributeValue("style", "font - size:18px; text-align:center;");
+
+
+            }
+        }
+    }
+    //τα dir se ltr 
+    private static void ModifyDir(HtmlDocument htmlDoc)
+    {
+        var nodesWithDir = htmlDoc.DocumentNode.SelectNodes("//*[@dir='rtl']");
+
+        if (nodesWithDir != null)
+        {
+            foreach (var node in nodesWithDir)
+            {
+                // Ορίστε το inline style
+                node.SetAttributeValue("dir", "ltr");
 
 
             }
