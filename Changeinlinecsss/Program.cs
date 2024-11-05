@@ -10,7 +10,8 @@ class Program
     {
         // Ζήτα από τον χρήστη να εισάγει το path του φακέλου
         Console.WriteLine("Please enter the path of the folder containing the HTML files:");
-        string folderPath = Console.ReadLine();
+        string folderPath = Console.ReadLine() ?? string.Empty;
+
 
         // Έλεγξε αν το path υπάρχει
         if (Directory.Exists(folderPath))
@@ -41,6 +42,7 @@ class Program
                     RemoveAnchorTags(htmlDoc);
                     RemoveFootnotes(htmlDoc);
                     RemoveBreakTags(htmlDoc);
+                    ModifyDir(htmlDoc);
                     ModifyDir(htmlDoc);
 
                     // Αποθηκεύστε το τροποποιημένο HTML πίσω στο αρχείο
