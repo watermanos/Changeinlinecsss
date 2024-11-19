@@ -42,6 +42,8 @@ class Program
                     RemoveFootnotes(htmlDoc);
                     RemoveBreakTags(htmlDoc);
                     ModifyDir(htmlDoc);
+                    ReplaceListTags(htmlDoc);
+
 
                     // Αποθηκεύστε το τροποποιημένο HTML πίσω στο αρχείο
                     File.WriteAllText(htmlPath, htmlDoc.DocumentNode.OuterHtml);
@@ -260,6 +262,42 @@ class Program
             }
         }
     }
+
+    private static void ReplaceListTags(HtmlDocument htmlDoc)
+    {
+        // Αντικατάσταση των <li> με <p> διατηρώντας την κλάση
+        var liNodes = htmlDoc.DocumentNode.SelectNodes("//li");
+        if (liNodes != null)
+        {
+            foreach (var node in liNodes)
+            {
+                // Δημιουργία ενός νέου <p> tag
+                var newNode = HtmlNode.CreateNode("<p>" + node.InnerHtml + "</p>");
+
+                // Αντιγραφή της κλάσης, αν υπάρχει
+                if (node.Attributes["class"] != null)
+                {
+                    newNode.SetAttributeValue("class", node.Attributes["class"].Value);
+                }
+
+                // Αντικατάσταση του <li> με το <p>
+                node.ParentNode.ReplaceChild(newNode, node);
+            }
+        }
+
+        // Αφαίρεση των <ol> tags
+        var olNodes = htmlDoc.DocumentNode.SelectNodes("//ol");
+        if (olNodes != null)
+        {
+            foreach (var node in olNodes)
+            {
+                // Αντικαθιστούμε το <ol> με το περιεχόμενό του
+                node.ParentNode.ReplaceChild(HtmlNode.CreateNode(node.InnerHtml), node);
+            }
+        }
+    }
+
+
     // Μέθοδος που αφαιρεί τα <br> tags
     private static void RemoveBreakTags(HtmlDocument htmlDoc)
     {
