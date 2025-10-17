@@ -265,37 +265,42 @@ class Program
 
     private static void ReplaceListTags(HtmlDocument htmlDoc)
     {
-        // Αντικατάσταση των <li> με <p> διατηρώντας την κλάση
+        // 1. Μετατροπή όλων των <li> σε <p>
         var liNodes = htmlDoc.DocumentNode.SelectNodes("//li");
         if (liNodes != null)
         {
-            foreach (var node in liNodes)
+            foreach (var node in liNodes.ToList())
             {
-                // Δημιουργία ενός νέου <p> tag
-                var newNode = HtmlNode.CreateNode("<p>" + node.InnerHtml + "</p>");
+                var newNode = htmlDoc.CreateElement("p");
+                newNode.InnerHtml = node.InnerHtml;
 
-                // Αντιγραφή της κλάσης, αν υπάρχει
                 if (node.Attributes["class"] != null)
-                {
                     newNode.SetAttributeValue("class", node.Attributes["class"].Value);
-                }
 
-                // Αντικατάσταση του <li> με το <p>
                 node.ParentNode.ReplaceChild(newNode, node);
             }
         }
 
-        // Αφαίρεση των <ol> tags
+        // 2. Αφαίρεση των <ol> (κρατάμε μόνο το περιεχόμενο)
         var olNodes = htmlDoc.DocumentNode.SelectNodes("//ol");
         if (olNodes != null)
         {
-            foreach (var node in olNodes)
+            foreach (var node in olNodes.ToList())
             {
-                // Αντικαθιστούμε το <ol> με το περιεχόμενό του
-                node.ParentNode.ReplaceChild(HtmlNode.CreateNode(node.InnerHtml), node);
+                var parent = node.ParentNode;
+                if (parent == null) continue;
+
+                foreach (var child in node.ChildNodes.ToList())
+                {
+                    parent.InsertBefore(child, node);
+                }
+
+                parent.RemoveChild(node);
             }
         }
     }
+
+
 
 
     // Μέθοδος που αφαιρεί τα <br> tags
