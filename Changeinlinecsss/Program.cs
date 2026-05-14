@@ -1,294 +1,334 @@
 ﻿using HtmlAgilityPack;
 using System;
-using System.Drawing;
 using System.IO;
-using static System.Net.Mime.MediaTypeNames;
+using System.Linq;
 
 class Program
 {
     static void Main()
     {
-        // Ζήτα από τον χρήστη να εισάγει το path του φακέλου
         Console.WriteLine("Please enter the path of the folder containing the HTML files:");
         string folderPath = Console.ReadLine();
 
-        // Έλεγξε αν το path υπάρχει
-        if (Directory.Exists(folderPath))
+        // Έλεγχος φακέλου
+        if (!Directory.Exists(folderPath))
         {
-            // Πάρε όλα τα αρχεία .html από τον φάκελο
-            string[] htmlFiles = Directory.GetFiles(folderPath, "*.html");
+            Console.WriteLine("The folder does not exist.");
+            return;
+        }
 
-            if (htmlFiles.Length > 0)
+        // Παίρνουμε όλα τα html αρχεία
+        string[] htmlFiles = Directory.GetFiles(folderPath, "*.html");
+
+        if (htmlFiles.Length == 0)
+        {
+            Console.WriteLine("No HTML files found.");
+            return;
+        }
+
+        foreach (string htmlPath in htmlFiles)
+        {
+            Console.WriteLine($"\nEditing file: {htmlPath}");
+
+            // Διαβάζουμε HTML
+            string htmlContent = File.ReadAllText(htmlPath);
+
+            // Load HtmlAgilityPack
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(htmlContent);
+
+            // PAGE NUMBER μένει fixed
+            ModifyPageNumberElements(htmlDoc);
+
+            // Dynamic custom styles
+            ApplyCustomStyles(htmlDoc);
+
+            // Utility αλλαγές
+            ModifyTitleElements(htmlDoc);
+            ModifyDir(htmlDoc);
+            RemoveAnchorTags(htmlDoc);
+            RemoveFootnotes(htmlDoc);
+            RemoveBreakTags(htmlDoc);
+            ReplaceListTags(htmlDoc);
+
+            // Save
+            File.WriteAllText(htmlPath, htmlDoc.DocumentNode.OuterHtml);
+
+            Console.WriteLine($"File updated: {htmlPath}");
+        }
+
+        Console.WriteLine("\nDone.");
+    }
+
+    // =========================================
+    // PAGE NUMBER
+    // =========================================
+    private static void ModifyPageNumberElements(HtmlDocument htmlDoc)
+    {
+        var nodes = htmlDoc.DocumentNode
+            .SelectNodes("//*[@class='PAGENUMBER']");
+
+        if (nodes != null)
+        {
+            foreach (var node in nodes)
             {
-                foreach (string htmlPath in htmlFiles)
+                node.SetAttributeValue(
+                    "style",
+                    "text-align:center; font-size:12px;"
+                );
+
+                string existingText = node.InnerText.Trim();
+
+                node.InnerHtml = "Σελ. " + existingText;
+            }
+
+            Console.WriteLine($"PAGENUMBER updated ({nodes.Count} nodes).");
+        }
+    }
+
+    // =========================================
+    // DYNAMIC CSS ENGINE
+    // =========================================
+    private static void ApplyCustomStyles(HtmlDocument htmlDoc)
+    {
+        Console.WriteLine("\n=== CUSTOM STYLE MODE ===");
+        Console.WriteLine("Type EXIT to stop adding styles.\n");
+
+        while (true)
+        {
+            Console.WriteLine("Enter class name:");
+            string className = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(className))
+            {
+                Console.WriteLine("Class name cannot be empty.");
+                continue;
+            }
+
+            if (className.Trim().ToUpper() == "EXIT")
+                break;
+
+            Console.WriteLine($"Enter CSS style for '{className}':");
+
+            string style = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(style))
+            {
+                Console.WriteLine("Style cannot be empty.");
+                continue;
+            }
+
+            var nodes = htmlDoc.DocumentNode
+                .SelectNodes($"//*[@class='{className}']");
+
+            if (nodes != null)
+            {
+                foreach (var node in nodes)
                 {
-                    Console.WriteLine($"Edit file: {htmlPath}");
-
-                    // Διαβάστε το περιεχόμενο του HTML αρχείου
-                    string htmlContent = File.ReadAllText(htmlPath);
-
-                    // Φορτώστε το HTML περιεχόμενο στο HtmlDocument
-                    var htmlDoc = new HtmlDocument();
-                    htmlDoc.LoadHtml(htmlContent);
-
-                    // Κάντε τις τροποποιήσεις στο HTML
-                    ModifyPageNumberElements(htmlDoc);
-                    ModifySideNumberElements(htmlDoc);
-                    ModifyTitleElements(htmlDoc);
-                    Modifypraktika(htmlDoc);
-                    Modifykt(htmlDoc);
-                    ModifyKefalaio(htmlDoc);
-                    RemoveAnchorTags(htmlDoc);
-                    RemoveFootnotes(htmlDoc);
-                    RemoveBreakTags(htmlDoc);
-                    ModifyDir(htmlDoc);
-                    ReplaceListTags(htmlDoc);
-
-
-                    // Αποθηκεύστε το τροποποιημένο HTML πίσω στο αρχείο
-                    File.WriteAllText(htmlPath, htmlDoc.DocumentNode.OuterHtml);
-
-                    Console.WriteLine($"File Edit: File {htmlPath} updated.");
+                    node.SetAttributeValue("style", style);
                 }
 
-                Console.WriteLine("Done.");
+                Console.WriteLine(
+                    $"Applied style to {nodes.Count} node(s).");
             }
             else
             {
-                Console.WriteLine("The folder does not contain HTML files.");
-            }
-        }
-        else
-        {
-            Console.WriteLine("The folder you entered does not exist.");
-        }
-
-    }
-
-    // Μέθοδος που τροποποιεί τα στοιχεία με class="PAGENUMBER"
-    private static void ModifyPageNumberElements(HtmlDocument htmlDoc)
-    {
-        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='PAGENUMBER']");
-
-        if (nodes != null)
-        {
-            foreach (var node in nodes)
-            {
-                // Ορίστε το inline style
-                node.SetAttributeValue("style", "text-align: center; font-size:12px;");
-
-                // Προσθέστε το "Σελ. " πριν από το υπάρχον κείμενο (αν υπάρχει)
-                string existingText = node.InnerText.Trim();
-                node.InnerHtml = "Σελ. " + existingText;
+                Console.WriteLine(
+                    $"No nodes found for class '{className}'.");
             }
         }
     }
 
-    // Μέθοδος που τροποποιεί τα στοιχεία με class="SIDENUMBER"
-    private static void ModifySideNumberElements(HtmlDocument htmlDoc)
-    {
-        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='SIDENUMBER']");
-
-        if (nodes != null)
-        {
-            foreach (var node in nodes)
-            {
-                // Ορίστε το inline style
-                node.SetAttributeValue("style", "font-weight: bold; text-align: left;");
-
-
-            }
-        }
-    }
-
-    // Μέθοδος που τροποποιεί τα στοιχεία με class="praktika"
-    private static void Modifypraktika(HtmlDocument htmlDoc)
-    {
-        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='PRAKTIKO' or @class='APANTHSH-TITLOS' or @class='x--------- x---------']");
-
-        if (nodes != null)
-        {
-            foreach (var node in nodes)
-            {
-                // Ορίστε το inline style
-                node.SetAttributeValue("style", "font - size:18px; font-weight: bold;");
-
-
-            }
-        }
-    }
-
-    // Μέθοδος που τροποποιεί τα στοιχεία με class="KEFALAIO-TITLO"
-    private static void Modifykt(HtmlDocument htmlDoc)
-    {
-        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='KEFALAIO-TITLOS']");
-
-        if (nodes != null)
-        {
-            foreach (var node in nodes)
-            {
-                // Ορίστε το inline style
-                node.SetAttributeValue("style", "font - size:18px; text-align:center; font-weight: bold;");
-
-
-            }
-        }
-    }
-
-    // Μέθοδος που τροποποιεί τα στοιχεία με class="Kefalaio"
-    private static void ModifyKefalaio(HtmlDocument htmlDoc)
-    {
-        var nodes = htmlDoc.DocumentNode.SelectNodes("//*[@class='KEFALAIO']");
-
-        if (nodes != null)
-        {
-            foreach (var node in nodes)
-            {
-                // Ορίστε το inline style
-                node.SetAttributeValue("style", "font - size:18px; text-align:center;");
-
-
-            }
-        }
-    }
-    //τα dir se ltr 
-    private static void ModifyDir(HtmlDocument htmlDoc)
-    {
-        var nodesWithDir = htmlDoc.DocumentNode.SelectNodes("//*[@dir='rtl']");
-
-        if (nodesWithDir != null)
-        {
-            foreach (var node in nodesWithDir)
-            {
-                // Ορίστε το inline style
-                node.SetAttributeValue("dir", "ltr");
-
-
-            }
-        }
-    }
-
-    // Μέθοδος που τροποποιεί τα στοιχεία με class="H01-Titlos"
+    // =========================================
+    // TITLE / TITLOS
+    // =========================================
     private static void ModifyTitleElements(HtmlDocument htmlDoc)
     {
         var allNodes = htmlDoc.DocumentNode.Descendants();
 
         foreach (var node in allNodes)
         {
-            bool containsTitlosOrTitle = false;
+            bool containsTitle = false;
 
-            // Έλεγχος στο InnerText (κείμενο του κόμβου)
+            // InnerText check
             if (!string.IsNullOrEmpty(node.InnerText) &&
-                (node.InnerText.Contains("Titlos") || node.InnerText.Contains("Title")))
+                (node.InnerText.Contains("Titlos") ||
+                 node.InnerText.Contains("Title")))
             {
-                containsTitlosOrTitle = true;
+                containsTitle = true;
             }
 
-            // Έλεγχος στα attributes (π.χ. class, id, name, κ.λπ.)
+            // Attribute check
             foreach (var attribute in node.Attributes)
             {
-                if (attribute.Value.Contains("Titlos") || attribute.Value.Contains("Title"))
+                if (attribute.Value.Contains("Titlos") ||
+                    attribute.Value.Contains("Title"))
                 {
-                    containsTitlosOrTitle = true;
+                    containsTitle = true;
                     break;
                 }
             }
 
-            // Αν βρέθηκε το "Titlos" ή "Title", τροποποίησε το style
-            if (containsTitlosOrTitle && node.NodeType == HtmlNodeType.Element)
+            // Apply style
+            if (containsTitle &&
+                node.NodeType == HtmlNodeType.Element)
             {
-                // Έλεγξε αν υπάρχει ήδη το style attribute, αν ναι, πρόσθεσε το νέο στυλ
                 if (node.Attributes["style"] != null)
                 {
-                    node.Attributes["style"].Value += " font-weight: bold; font-size:18px;";
+                    node.Attributes["style"].Value +=
+                        " font-weight:bold; font-size:18px;";
                 }
                 else
                 {
-                    // Αν δεν υπάρχει το style, πρόσθεσέ το
-
-
-                    node.SetAttributeValue("style", "font-weight: bold; font-size:18px;");
+                    node.SetAttributeValue(
+                        "style",
+                        "font-weight:bold; font-size:18px;"
+                    );
                 }
             }
         }
     }
 
+    // =========================================
+    // RTL -> LTR
+    // =========================================
+    private static void ModifyDir(HtmlDocument htmlDoc)
+    {
+        var nodes = htmlDoc.DocumentNode
+            .SelectNodes("//*[@dir='rtl']");
 
+        if (nodes != null)
+        {
+            foreach (var node in nodes)
+            {
+                node.SetAttributeValue("dir", "ltr");
+            }
 
-    // Μέθοδος που αφαιρεί τα <a> tags
+            Console.WriteLine($"RTL changed to LTR ({nodes.Count} nodes).");
+        }
+    }
+
+    // =========================================
+    // REMOVE <a>
+    // =========================================
     private static void RemoveAnchorTags(HtmlDocument htmlDoc)
     {
-        // Βρείτε όλα τα <a> tags
-        var anchorNodes = htmlDoc.DocumentNode.SelectNodes("//a");
+        var anchorNodes = htmlDoc.DocumentNode
+            .SelectNodes("//a");
 
         if (anchorNodes != null)
         {
-            foreach (var node in anchorNodes)
+            foreach (var node in anchorNodes.ToList())
             {
-                // Αντικαταστήστε το <a> με το κείμενο που περιέχει
                 var parentNode = node.ParentNode;
+
                 if (parentNode != null)
                 {
-                    parentNode.ReplaceChild(HtmlNode.CreateNode(node.InnerHtml), node);
+                    parentNode.ReplaceChild(
+                        HtmlNode.CreateNode(node.InnerHtml),
+                        node
+                    );
                 }
             }
+
+            Console.WriteLine($"Removed {anchorNodes.Count} anchor tags.");
         }
     }
 
-    // Μέθοδος που αφαιρεί τα footnotes
+    // =========================================
+    // REMOVE FOOTNOTES
+    // =========================================
     private static void RemoveFootnotes(HtmlDocument htmlDoc)
     {
-        // Βρείτε όλα τα στοιχεία με οποιοδήποτε attribute που περιέχει τη λέξη "ekthetis"
-        var nodesWithEkthetis = htmlDoc.DocumentNode.SelectNodes("//*");
+        var nodes = htmlDoc.DocumentNode.SelectNodes("//*");
 
-        if (nodesWithEkthetis != null)
+        int removedCount = 0;
+
+        if (nodes != null)
         {
-            foreach (var node in nodesWithEkthetis)
+            foreach (var node in nodes.ToList())
             {
-                // Ελέγχουμε όλα τα attributes του κόμβου
                 foreach (var attribute in node.Attributes)
                 {
-                    // Εάν το attribute περιέχει τη λέξη "ekthetis", αφαιρούμε τον κόμβο
-                    if (attribute.Value.Contains("ekthetis") || attribute.Value.Contains("ektheths") || attribute.Value.Contains("Ekthetis") || attribute.Value.Contains("Ektheths"))
+                    string value = attribute.Value.ToLower();
+
+                    if (value.Contains("ekthetis") ||
+                        value.Contains("ektheths"))
                     {
-                        var parentNode = node.ParentNode;
-                        if (parentNode != null)
-                        {
-                            parentNode.RemoveChild(node);
-                            break; // Προχωράμε στον επόμενο κόμβο, αφού βρήκαμε το attribute που θέλουμε
-                        }
+                        node.ParentNode?.RemoveChild(node);
+
+                        removedCount++;
+                        break;
                     }
                 }
             }
         }
+
+        Console.WriteLine($"Removed {removedCount} footnote nodes.");
     }
 
+    // =========================================
+    // REMOVE <br>
+    // =========================================
+    private static void RemoveBreakTags(HtmlDocument htmlDoc)
+    {
+        var brNodes = htmlDoc.DocumentNode
+            .SelectNodes("//br");
+
+        if (brNodes != null)
+        {
+            foreach (var node in brNodes.ToList())
+            {
+                node.ParentNode?.RemoveChild(node);
+            }
+
+            Console.WriteLine($"Removed {brNodes.Count} <br> tags.");
+        }
+    }
+
+    // =========================================
+    // REPLACE LIST TAGS
+    // =========================================
     private static void ReplaceListTags(HtmlDocument htmlDoc)
     {
-        // 1. Μετατροπή όλων των <li> σε <p>
-        var liNodes = htmlDoc.DocumentNode.SelectNodes("//li");
+        // LI -> P
+        var liNodes = htmlDoc.DocumentNode
+            .SelectNodes("//li");
+
         if (liNodes != null)
         {
             foreach (var node in liNodes.ToList())
             {
                 var newNode = htmlDoc.CreateElement("p");
+
                 newNode.InnerHtml = node.InnerHtml;
 
                 if (node.Attributes["class"] != null)
-                    newNode.SetAttributeValue("class", node.Attributes["class"].Value);
+                {
+                    newNode.SetAttributeValue(
+                        "class",
+                        node.Attributes["class"].Value
+                    );
+                }
 
                 node.ParentNode.ReplaceChild(newNode, node);
             }
+
+            Console.WriteLine($"Converted {liNodes.Count} li tags to p.");
         }
 
-        // 2. Αφαίρεση των <ol> (κρατάμε μόνο το περιεχόμενο)
-        var olNodes = htmlDoc.DocumentNode.SelectNodes("//ol");
+        // REMOVE OL
+        var olNodes = htmlDoc.DocumentNode
+            .SelectNodes("//ol");
+
         if (olNodes != null)
         {
             foreach (var node in olNodes.ToList())
             {
                 var parent = node.ParentNode;
-                if (parent == null) continue;
+
+                if (parent == null)
+                    continue;
 
                 foreach (var child in node.ChildNodes.ToList())
                 {
@@ -297,29 +337,8 @@ class Program
 
                 parent.RemoveChild(node);
             }
-        }
-    }
 
-
-
-
-    // Μέθοδος που αφαιρεί τα <br> tags
-    private static void RemoveBreakTags(HtmlDocument htmlDoc)
-    {
-        // Βρείτε όλα τα <br> tags (με διάφορες μορφές)
-        var brNodes = htmlDoc.DocumentNode.SelectNodes("//br");
-
-        if (brNodes != null)
-        {
-            foreach (var node in brNodes)
-            {
-                // Αφαιρέστε το <br> tag
-                var parentNode = node.ParentNode;
-                if (parentNode != null)
-                {
-                    parentNode.RemoveChild(node);
-                }
-            }
+            Console.WriteLine($"Removed {olNodes.Count} ol tags.");
         }
     }
 }
