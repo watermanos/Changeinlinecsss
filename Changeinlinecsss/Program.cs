@@ -30,20 +30,19 @@ class Program
         {
             Console.WriteLine($"\nEditing file: {htmlPath}");
 
-            // Διαβάζουμε HTML
+            // Read HTML
             string htmlContent = File.ReadAllText(htmlPath);
 
-            // Load HtmlAgilityPack
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlContent);
 
-            // PAGE NUMBER μένει fixed
+            
             ModifyPageNumberElements(htmlDoc);
 
-            // Dynamic custom styles
+           
             ApplyCustomStyles(htmlDoc);
 
-            // Utility αλλαγές
+          
             ModifyTitleElements(htmlDoc);
             ModifyDir(htmlDoc);
             RemoveAnchorTags(htmlDoc);
@@ -60,9 +59,9 @@ class Program
         Console.WriteLine("\nDone.");
     }
 
-    // =========================================
+  
     // PAGE NUMBER
-    // =========================================
+   
     private static void ModifyPageNumberElements(HtmlDocument htmlDoc)
     {
         var nodes = htmlDoc.DocumentNode
@@ -86,9 +85,9 @@ class Program
         }
     }
 
-    // =========================================
+
     // DYNAMIC CSS ENGINE
-    // =========================================
+  
     private static void ApplyCustomStyles(HtmlDocument htmlDoc)
     {
         Console.WriteLine("\n=== CUSTOM STYLE MODE ===");
@@ -139,9 +138,8 @@ class Program
         }
     }
 
-    // =========================================
     // TITLE / TITLOS
-    // =========================================
+    
     private static void ModifyTitleElements(HtmlDocument htmlDoc)
     {
         var allNodes = htmlDoc.DocumentNode.Descendants();
@@ -189,9 +187,8 @@ class Program
         }
     }
 
-    // =========================================
     // RTL -> LTR
-    // =========================================
+  
     private static void ModifyDir(HtmlDocument htmlDoc)
     {
         var nodes = htmlDoc.DocumentNode
@@ -208,9 +205,9 @@ class Program
         }
     }
 
-    // =========================================
+    
     // REMOVE <a>
-    // =========================================
+  
     private static void RemoveAnchorTags(HtmlDocument htmlDoc)
     {
         var anchorNodes = htmlDoc.DocumentNode
@@ -235,9 +232,9 @@ class Program
         }
     }
 
-    // =========================================
+    
     // REMOVE FOOTNOTES
-    // =========================================
+   
     private static void RemoveFootnotes(HtmlDocument htmlDoc)
     {
         var nodes = htmlDoc.DocumentNode.SelectNodes("//*");
@@ -267,9 +264,9 @@ class Program
         Console.WriteLine($"Removed {removedCount} footnote nodes.");
     }
 
-    // =========================================
+    
     // REMOVE <br>
-    // =========================================
+    
     private static void RemoveBreakTags(HtmlDocument htmlDoc)
     {
         var brNodes = htmlDoc.DocumentNode
@@ -286,9 +283,9 @@ class Program
         }
     }
 
-    // =========================================
+    
     // REPLACE LIST TAGS
-    // =========================================
+  
     private static void ReplaceListTags(HtmlDocument htmlDoc)
     {
         // LI -> P
