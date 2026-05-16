@@ -2,15 +2,6 @@
 
 This program allows you to modify and edit multiple HTML files within a folder. It uses the **HtmlAgilityPack** library to parse and manipulate the HTML content.
 
-The program is specifically designed for the modification of **excerpts from books** published by the **NOMIKI BIBLIOTHIKI Group** ([Νομική Βιβλιοθήκη](https://www.nb.org/)), helping format and organize the documents more efficiently.
-
-The program performs various modifications, such as:
-- Modifying elements with page numbers (`PAGENUMBER` class).
-- Modifying elements with side numbers (`SIDENUMBER` class).
-- Modifying titles and headings (e.g., `KEFALAIO-TITLOS`, `PRAKTIKO` classes).
-- Removing `<a>` tags, footnotes, and `<br>` tags.
-- Replacing `<li>` tags with `<p>` tags for better layout.
-- Modifying elements with the `dir='rtl'` attribute to `ltr`.
 
 ## Features
 
